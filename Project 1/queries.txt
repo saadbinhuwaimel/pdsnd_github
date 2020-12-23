@@ -1,0 +1,53 @@
+
+/Query 1
+SELECT f.title film_title, c.name category_name,  COUNT(r.rental_id) AS rental_count
+FROM category c
+JOIN film_category fc
+ON c.category_id = fc.category_id
+JOIN film f
+ON fc.film_id = f.film_id
+JOIN inventory i
+ON i.film_id = f.film_id
+JOIN rental r
+ON r.inventory_id = i.inventory_id
+WHERE c.name IN ('Animation','Children','Classics' , 'Comedy','Family','Music')
+GROUP BY c.name , f.title
+ORDER BY c.name , f.title;
+
+/Query 2
+SELECT Rental_month , Rental_year ,Store_ID , COUNT (Rental_month ) AS Count_rentals
+FROM (
+  SELECT  DATE_PART('month', r.rental_date) AS Rental_month , DATE_PART('year', r.rental_date) AS Rental_year ,c.store_id as Store_ID
+FROM customer c
+JOIN rental r
+ON r.customer_id = c.customer_id )t1
+GROUP BY Rental_month , Store_ID , Rental_year
+ORDER BY Count_rentals DESC ;
+
+/Query 3
+SELECT DATE_TRUNC('month', p.payment_date) AS pay_mon , c.first_name ||' '|| c.last_name AS fullname , COUNT (p.amount) AS pay_countmon , SUM ( amount ) AS pay_amount
+FROM payment p
+JOIN customer c
+ON c.customer_id = p.customer_id
+WHERE c.first_name ||' '|| c.last_name  IN ( SELECT t1.fullname                             FROM ( SELECT  SUM (p.amount) AS total_payment , c.first_name ||' '|| c.last_name AS fullname
+FROM payment p
+JOIN customer c
+ON c.customer_id = p.customer_id
+GROUP BY fullname
+ORDER BY total_payment DESC
+LIMIT 10) t1)
+GROUP BY pay_mon , fullname
+ORDER BY fullname , pay_mon ;
+
+/Query 4
+SELECT name , standard_quartile , COUNT (standard_quartile) AS count 
+FROM (SELECT f.title AS title , c.name AS name , f.rental_duration rental_duration , NTILE(4) OVER (ORDER BY f.rental_duration) AS standard_quartile 
+FROM film f
+JOIN film_category fc
+ON f.film_id = fc.film_id
+JOIN category c
+ON fc.category_id = c.category_id
+WHERE c.name IN ('Animation','Children','Classics' , 'Comedy','Family','Music')
+)t1
+GROUP BY  name , standard_quartile
+ORDER BY name , standard_quartile ;
